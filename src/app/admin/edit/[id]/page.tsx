@@ -5,11 +5,12 @@ import { prisma } from "@/lib/db";
 import { toPublicCase } from "@/lib/serialize";
 import AdminCaseForm from "@/components/admin/AdminCaseForm";
 
-export default async function EditCasePage({ params }: { params: { id: string } }) {
-  const token = cookies().get(getAdminCookieName())?.value;
+export default async function EditCasePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const token = (await cookies()).get(getAdminCookieName())?.value;
   if (!verifyAdminToken(token)) redirect("/admin/login");
 
-  const c = await prisma.case.findUnique({ where: { id: params.id }, include: { media: true } });
+  const c = await prisma.case.findUnique({ where: { id }, include: { media: true } });
   if (!c) return notFound();
 
   return (

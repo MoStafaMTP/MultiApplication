@@ -6,7 +6,7 @@ import AdminDashboard from "@/components/admin/AdminDashboard";
 import { toPublicCase } from "@/lib/serialize";
 
 export default async function AdminPage() {
-  const token = cookies().get(getAdminCookieName())?.value;
+  const token = (await cookies()).get(getAdminCookieName())?.value;
   if (!verifyAdminToken(token)) redirect("/admin/login");
 
   const cases = await prisma.case.findMany({ orderBy: { createdAt: "desc" }, include: { media: true } });

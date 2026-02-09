@@ -23,7 +23,7 @@ function safeExt(mime: string, original: string) {
 }
 
 export async function POST(request: Request) {
-  if (!requireAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await requireAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const form = await request.formData();
   const file = form.get("file");

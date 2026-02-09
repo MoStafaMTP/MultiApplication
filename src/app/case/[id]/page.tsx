@@ -5,8 +5,9 @@ import CasePrimaryMedia from "@/components/CasePrimaryMedia";
 import Link from "next/link";
 import { toPublicCase } from "@/lib/serialize";
 
-export default async function CasePage({ params }: { params: { id: string } }) {
-  const c = await prisma.case.findUnique({ where: { id: params.id }, include: { media: true } });
+export default async function CasePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const c = await prisma.case.findUnique({ where: { id }, include: { media: true } });
   if (!c) return notFound();
 
   const pc = toPublicCase(c);

@@ -5,13 +5,13 @@ import { requireAdmin } from "@/app/api/admin/_requireAdmin";
 export const runtime = "nodejs";
 
 export async function GET() {
-  if (!requireAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await requireAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const cases = await prisma.case.findMany({ orderBy: { createdAt: "desc" }, include: { media: true } });
   return NextResponse.json(cases);
 }
 
 export async function POST(request: Request) {
-  if (!requireAdmin()) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await requireAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });

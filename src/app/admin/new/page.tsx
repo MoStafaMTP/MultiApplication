@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 import { getAdminCookieName, verifyAdminToken } from "@/lib/adminSession";
 import AdminCaseForm from "@/components/admin/AdminCaseForm";
 
-export default function NewCasePage() {
-  const token = cookies().get(getAdminCookieName())?.value;
+export default async function NewCasePage() {
+  const token = (await cookies()).get(getAdminCookieName())?.value;
   if (!verifyAdminToken(token)) redirect("/admin/login");
 
   return (
