@@ -1,0 +1,86 @@
+@import "tailwindcss";
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@layer base {
+  :root {
+    --bg: 255 255 255;
+    --fg: 17 24 39;
+    --muted: 100 116 139;
+    --card: 255 255 255;
+    --card-border: 226 232 240;
+    --ring: 59 130 246;
+    --surface: 248 250 252;
+    --surface-2: 241 245 249;
+  }
+
+  [data-theme="dark"] {
+    --bg: 2 6 23;
+    --fg: 226 232 240;
+    --muted: 148 163 184;
+    --card: 15 23 42;
+    --card-border: 51 65 85;
+    --ring: 56 189 248;
+    --surface: 2 6 23;
+    --surface-2: 15 23 42;
+  }
+
+  html, body { height: 100%; }
+
+  body {
+    background: rgb(var(--bg));
+    color: rgb(var(--fg));
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  }
+
+  ::selection { background: rgba(var(--ring), 0.25); }
+}
+
+@layer utilities {
+  .card { @apply rounded-3xl border shadow-sm; border-color: rgb(var(--card-border)); background: rgb(var(--card)); }
+  .soft-ring:focus { outline: none; box-shadow: 0 0 0 4px rgba(var(--ring), 0.25); }
+  .subtle-text { color: rgb(var(--muted)); }
+}
+@layer utilities {
+  /* Scrollbar styling for brand sidebar (and any scroll container using this class) */
+  .pretty-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(30, 58, 138, 0.65) transparent;
+  }
+  .pretty-scroll::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  .pretty-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .pretty-scroll::-webkit-scrollbar-thumb {
+    background: rgba(30, 58, 138, 0.45);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  .pretty-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(30, 58, 138, 0.70);
+  }
+
+  /* Home page search input: typed text black in dark mode */
+  [data-theme="dark"] .home-search-input {
+    background: rgba(255, 255, 255, 0.92) !important;
+    color: #0b0b0b !important;
+  }
+  [data-theme="dark"] .home-search-input::placeholder {
+    color: rgba(0, 0, 0, 0.55) !important;
+  }
+}
+@layer utilities {
+  /* Brand dropdown: attempt to force dark native dropdown in dark mode (best effort across browsers) */
+  [data-theme="dark"] .brand-select {
+    color-scheme: dark;
+    background: rgba(15, 23, 42, 0.92) !important; /* slate-900-ish */
+    color: rgba(255, 255, 255, 0.92) !important;
+  }
+  [data-theme="dark"] .brand-select option {
+    background: rgb(15, 23, 42) !important;
+    color: rgba(255, 255, 255, 0.95) !important;
+  }
+}

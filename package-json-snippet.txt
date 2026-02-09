@@ -1,0 +1,9 @@
+Dependencies:
+- react-comparison-slider
+- prisma
+- @prisma/client
+
+Scripts (optional):
+"db:push": "prisma db push",
+"db:generate": "prisma generate",
+"db:seed": "prisma db seed"

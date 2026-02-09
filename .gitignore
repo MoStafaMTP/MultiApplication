@@ -1,0 +1,28 @@
+# dependencies
+node_modules
+
+# next
+.next
+out
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# env
+.env
+.env.local
+.env.*.local
+
+# prisma/sqlite (اگر sqlite داخل پروژه ذخیره میشه)
+*.db
+*.db-journal
+
+# uploads (فایل‌های آپلودی)
+public/uploads
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  role         UserRole @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Case {
+  id        String   @id @default(cuid())
+  title     String
+  brand     String
+  model     String
+  yearStart Int
+  yearEnd   Int
+  sku       String?
+  published Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  media     Media[]
+}
+
+enum MediaKind {
+  BEFORE
+  AFTER
+  GALLERY
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+model Media {
+  id        String    @id @default(cuid())
+  caseId    String
+  kind      MediaKind
+  type      MediaType
+  url       String
+  posterUrl String?
+  sortOrder Int       @default(0)
+
+  createdAt DateTime  @default(now())
+
+  case      Case      @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId, kind])
+}
