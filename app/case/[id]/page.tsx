@@ -12,6 +12,8 @@ function sortMedia(media: any[]) {
   return (media ?? []).slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
 }
 
+export const dynamic = 'force-dynamic';
+
 export default async function CasePage({ params }: any) {
   const p = await params;
   const id = (p?.id as string | undefined) ?? undefined;

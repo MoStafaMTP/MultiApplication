@@ -2,6 +2,8 @@ import CaseGallery from "@/components/CaseGallery";
 import { prisma } from "@/lib/db";
 import { toPublicCase } from "@/lib/serialize";
 
+export const dynamic = 'force-dynamic';
+
 export default async function Page() {
   const cases = await prisma.case.findMany({
     where: { published: true },

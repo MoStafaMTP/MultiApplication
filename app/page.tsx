@@ -29,6 +29,8 @@ function toPublicCase(c: any) {
   };
 }
 
+export const dynamic = 'force-dynamic';
+
 export default async function Page() {
   const cases = await prisma.case.findMany({
     where: { published: true },
