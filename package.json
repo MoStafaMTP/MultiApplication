@@ -12,6 +12,7 @@
     "@prisma/client": "^6.19.1",
     "next": "16.0.10",
     "react": "19.2.1",
+    "react-comparison-slider": "^2.1.0",
     "react-dom": "19.2.1"
   },
   "devDependencies": {
