@@ -4,9 +4,10 @@ import { requireAdmin } from "../../_requireAdmin";
 
 export const runtime = "nodejs";
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!(await requireAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const { id } = await params;
   const body = await request.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
 
@@ -22,7 +23,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   if (typeof published === "boolean") data.published = published;
 
   if (Array.isArray(media)) {
-    await prisma.media.deleteMany({ where: { caseId: params.id } });
+    await prisma.media.deleteMany({ where: { caseId: id } });
     data.media = {
       create: media
         .filter((m: any) => m?.url && m?.kind && m?.type)
@@ -30,12 +31,13 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     };
   }
 
-  const updated = await prisma.case.update({ where: { id: params.id }, data, include: { media: true } });
+  const updated = await prisma.case.update({ where: { id }, data, include: { media: true } });
   return NextResponse.json(updated);
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!(await requireAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  await prisma.case.delete({ where: { id: params.id } });
+  const { id } = await params;
+  await prisma.case.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 }
