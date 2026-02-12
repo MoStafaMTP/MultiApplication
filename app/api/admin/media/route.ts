@@ -72,7 +72,10 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Invalid file path" }, { status: 400 });
   }
 
-  const filePath = path.join(process.cwd(), "public", fileUrl);
+  // Normalize the URL to a filesystem path under public/. Leading slashes would
+  // otherwise cause path.join to ignore the base segments.
+  const relativeUrl = fileUrl.replace(/^\/+/, "");
+  const filePath = path.join(process.cwd(), "public", relativeUrl);
   const normalizedPath = path.normalize(filePath);
   const publicDir = path.join(process.cwd(), "public");
 
