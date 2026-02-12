@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getAdminCookieName, verifyAdminToken } from "../../lib/adminSession";
-import MediaLibrary from "../../components/admin/MediaLibrary";
+import { getAdminCookieName, verifyAdminToken } from "@/lib/adminSession";
+import MediaLibrary from "@/components/admin/MediaLibrary";
 import Link from "next/link";
 
 async function getCookieValue(name: string) {
