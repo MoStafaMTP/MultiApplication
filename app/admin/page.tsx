@@ -28,6 +28,13 @@ export default async function AdminPage() {
           </div>
           <div className="flex items-center gap-2">
             <Link
+              href="/admin/media"
+              className="rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:opacity-90"
+              style={{ borderColor: "rgb(var(--card-border))", background: "rgba(var(--surface-2), 0.35)" }}
+            >
+              Media Library
+            </Link>
+            <Link
               href="/admin/users"
               className="rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:opacity-90"
               style={{ borderColor: "rgb(var(--card-border))", background: "rgba(var(--surface-2), 0.35)" }}
