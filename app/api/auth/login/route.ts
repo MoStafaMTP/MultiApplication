@@ -73,7 +73,7 @@ export async function POST(req: Request) {
   store.set(getSessionCookieName(), token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.COOKIE_SECURE === "true",
     path: "/",
   });
 

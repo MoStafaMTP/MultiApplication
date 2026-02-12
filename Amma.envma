@@ -1,0 +1,7 @@
+NODE_ENV=production
+SESSION_SECRET=CHANGE_ME_TO_A_LONG_RANDOM_STRING
+
+DATABASE_URL="file:/var/www/seat-ba-data/db/prod.db"
+
+NEXT_PUBLIC_LOGO_URL=/USF_Symbol_Gold.png
+
