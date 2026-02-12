@@ -14,35 +14,41 @@ type MediaItem = {
 };
 
 async function scanDirectory(dir: string, baseUrl: string): Promise<MediaItem[]> {
-  const items: MediaItem[] = [];
   try {
     const entries = await fs.readdir(dir, { withFileTypes: true });
+    const promises: Promise<MediaItem | MediaItem[]>[] = [];
+    
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
       if (entry.isDirectory()) {
-        const subItems = await scanDirectory(fullPath, `${baseUrl}/${entry.name}`);
-        items.push(...subItems);
+        promises.push(scanDirectory(fullPath, `${baseUrl}/${entry.name}`));
       } else if (entry.isFile()) {
         const ext = path.extname(entry.name).toLowerCase();
         const isImage = [".jpg", ".jpeg", ".png", ".webp", ".gif"].includes(ext);
         const isVideo = [".mp4", ".webm", ".mov"].includes(ext);
         if (isImage || isVideo) {
-          const stat = await fs.stat(fullPath);
-          const relativePath = path.relative(path.join(process.cwd(), "public"), fullPath);
-          items.push({
-            url: `/${relativePath.replace(/\\/g, "/")}`,
-            name: entry.name,
-            size: stat.size,
-            type: isVideo ? "VIDEO" : "IMAGE",
-            date: stat.mtime.toISOString(),
-          });
+          promises.push(
+            fs.stat(fullPath).then((stat) => {
+              const relativePath = path.relative(path.join(process.cwd(), "public"), fullPath);
+              return {
+                url: `/${relativePath.replace(/\\/g, "/")}`,
+                name: entry.name,
+                size: stat.size,
+                type: (isVideo ? "VIDEO" : "IMAGE") as "IMAGE" | "VIDEO",
+                date: stat.mtime.toISOString(),
+              };
+            })
+          );
         }
       }
     }
+    
+    const results = await Promise.all(promises);
+    return results.flat();
   } catch (err) {
     console.error(`Error scanning ${dir}:`, err);
+    return [];
   }
-  return items;
 }
 
 export async function GET() {

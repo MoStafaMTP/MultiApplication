@@ -32,9 +32,11 @@ function toPublicCase(c: any) {
 export const dynamic = 'force-dynamic';
 
 export default async function Page() {
+  // Limit to 100 most recent cases to avoid performance issues
   const cases = await prisma.case.findMany({
     where: { published: true },
     orderBy: { createdAt: "desc" },
+    take: 100,
     include: { media: true },
   });
 

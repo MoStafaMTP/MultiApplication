@@ -59,7 +59,7 @@ export default function MediaLibrary() {
     setError(null);
 
     try {
-      for (const file of Array.from(files)) {
+      const uploadPromises = Array.from(files).map(async (file) => {
         const formData = new FormData();
         formData.append("file", file);
         const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
@@ -67,7 +67,10 @@ export default function MediaLibrary() {
           const data = await res.json().catch(() => ({}));
           throw new Error(data?.error ?? `Failed to upload ${file.name}`);
         }
-      }
+        return res.json();
+      });
+      
+      await Promise.all(uploadPromises);
       await loadMedia();
     } catch (e: any) {
       setError(e?.message ?? "Upload failed");
@@ -85,10 +88,17 @@ export default function MediaLibrary() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data?.error ?? "Failed to delete");
       }
-      await loadMedia();
-      setSelected(new Set());
+      // Optimistic update - remove from state immediately
+      setItems((prev) => prev.filter((item) => item.url !== url));
+      setSelected((prev) => {
+        const next = new Set(prev);
+        next.delete(url);
+        return next;
+      });
     } catch (e: any) {
       setError(e?.message ?? "Delete failed");
+      // Reload on error to sync state
+      await loadMedia();
     }
   }
 
@@ -96,18 +106,25 @@ export default function MediaLibrary() {
     if (selected.size === 0) return;
     if (!confirm(`Are you sure you want to delete ${selected.size} file(s)?`)) return;
 
+    const selectedUrls = Array.from(selected);
     try {
-      for (const url of selected) {
+      const deletePromises = selectedUrls.map(async (url) => {
         const res = await fetch(`/api/admin/media?url=${encodeURIComponent(url)}`, { method: "DELETE" });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
           throw new Error(data?.error ?? `Failed to delete ${url}`);
         }
-      }
-      await loadMedia();
+        return res.json();
+      });
+      
+      await Promise.all(deletePromises);
+      // Optimistic update - remove deleted items immediately
+      setItems((prev) => prev.filter((item) => !selectedUrls.includes(item.url)));
       setSelected(new Set());
     } catch (e: any) {
       setError(e?.message ?? "Bulk delete failed");
+      // Reload on error to sync state
+      await loadMedia();
     }
   }
 
@@ -121,10 +138,26 @@ export default function MediaLibrary() {
     setSelected(newSelected);
   }
 
-  function copyUrl(url: string) {
+  function copyUrl(url: string, event?: React.MouseEvent<HTMLButtonElement>) {
     const fullUrl = `${window.location.origin}${url}`;
-    navigator.clipboard.writeText(fullUrl);
-    alert("URL copied to clipboard!");
+    navigator.clipboard.writeText(fullUrl).catch(() => {
+      // Fallback for older browsers
+      const textarea = document.createElement("textarea");
+      textarea.value = fullUrl;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+    });
+    // Better UX than alert
+    const btn = event?.currentTarget;
+    if (btn) {
+      const original = btn.textContent;
+      btn.textContent = "✓";
+      setTimeout(() => {
+        btn.textContent = original;
+      }, 1000);
+    }
   }
 
   const filtered = items.filter((item) => filter === "ALL" || item.type === filter);
@@ -258,7 +291,10 @@ export default function MediaLibrary() {
               {/* Actions */}
               <div className="absolute right-2 top-2 z-10 flex gap-1 opacity-0 transition group-hover:opacity-100">
                 <button
-                  onClick={() => copyUrl(item.url)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    copyUrl(item.url, e);
+                  }}
                   className="rounded-xl border bg-white px-2 py-1 text-xs font-semibold transition hover:opacity-90"
                   style={{ borderColor: "rgb(var(--card-border))" }}
                   title="Copy URL"
@@ -266,7 +302,10 @@ export default function MediaLibrary() {
                   📋
                 </button>
                 <button
-                  onClick={() => handleDelete(item.url)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(item.url);
+                  }}
                   className="rounded-xl border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700 transition hover:opacity-90"
                   title="Delete"
                 >

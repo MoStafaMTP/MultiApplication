@@ -226,12 +226,14 @@ export default function AdminCaseForm({ mode, initialCase }: { mode: Mode; initi
     try {
       const existing = kind === "BEFORE" ? beforeItems : afterItems;
       let sort = nextSort(existing);
-      const uploads: UiMedia[] = [];
-
-      for (const file of Array.from(files)) {
+      
+      // Upload files in parallel for better performance
+      const uploadPromises = Array.from(files).map(async (file, idx) => {
         const r = await uploadFile(file);
-        uploads.push({ url: r.url, type: r.type, sortOrder: sort++ });
-      }
+        return { url: r.url, type: r.type, sortOrder: sort + idx };
+      });
+      
+      const uploads = await Promise.all(uploadPromises);
 
       if (kind === "BEFORE") setBeforeItems((prev) => [...prev, ...uploads]);
       else setAfterItems((prev) => [...prev, ...uploads]);
