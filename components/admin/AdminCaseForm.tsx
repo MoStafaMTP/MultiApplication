@@ -53,6 +53,7 @@ function Section({
   onUrlTypeChange,
   onAddUrl,
   onRemove,
+  onOpenLibrary,
 }: {
   title: string;
   subtitle: string;
@@ -66,6 +67,7 @@ function Section({
   onUrlTypeChange: (t: "IMAGE" | "VIDEO") => void;
   onAddUrl: () => void;
   onRemove: (index: number) => void;
+   onOpenLibrary: () => void;
 }) {
   return (
     <div className="rounded-3xl border p-5" style={inputStyle}>
@@ -96,6 +98,14 @@ function Section({
               Choose files
             </label>
             <div className="text-xs subtle-text">You can select multiple files at once.</div>
+            <button
+              type="button"
+              onClick={onOpenLibrary}
+              className="inline-flex items-center justify-center rounded-2xl border px-4 py-2 text-xs font-semibold transition hover:opacity-90"
+              style={{ borderColor: "rgb(var(--card-border))", background: "rgba(var(--surface-2), 0.2)" }}
+            >
+              Open Media Library
+            </button>
           </div>
         </div>
 
@@ -195,6 +205,7 @@ export default function AdminCaseForm({ mode, initialCase }: { mode: Mode; initi
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [libraryFor, setLibraryFor] = useState<"BEFORE" | "AFTER" | null>(null);
 
   const inputStyle = {
     borderColor: "rgb(var(--card-border))",
@@ -403,6 +414,7 @@ export default function AdminCaseForm({ mode, initialCase }: { mode: Mode; initi
           onUrlTypeChange={setBeforeUrlType}
           onAddUrl={() => addUrl("BEFORE")}
           onRemove={(i) => removeAt("BEFORE", i)}
+          onOpenLibrary={() => setLibraryFor("BEFORE")}
         />
 
         <Section
@@ -418,6 +430,7 @@ export default function AdminCaseForm({ mode, initialCase }: { mode: Mode; initi
           onUrlTypeChange={setAfterUrlType}
           onAddUrl={() => addUrl("AFTER")}
           onRemove={(i) => removeAt("AFTER", i)}
+          onOpenLibrary={() => setLibraryFor("AFTER")}
         />
       </div>
 
