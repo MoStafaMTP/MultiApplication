@@ -73,8 +73,6 @@ export async function POST(req: Request) {
   store.set(getSessionCookieName(), token, {
     httpOnly: true,
     sameSite: "lax",
-    // In production behind HTTPS, set COOKIE_SECURE="true" so cookies are Secure-only.
-    // On plain HTTP (e.g. bare VPS without TLS), leave it unset or "false" so login works.
     secure: process.env.COOKIE_SECURE === "true",
     path: "/",
   });

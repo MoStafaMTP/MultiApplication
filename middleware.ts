@@ -8,7 +8,6 @@ function hasFileExtension(pathname: string) {
 }
 
 function b64urlToBytes(b64url: string) {
-  // Convert base64url -> base64 and fix padding
   let b64 = b64url.replace(/-/g, "+").replace(/_/g, "/");
   while (b64.length % 4 !== 0) b64 += "=";
   const raw = atob(b64);
