@@ -6,9 +6,7 @@ type CaseListItem = {
   id: string;
   title: string;
   brand: string;
-  model: string | null;
-  updatedAt: string | number | Date;
-  createdAt?: string | number | Date;
+  createdAt?: string | Date | null;
   status?: string | null;
 };
 

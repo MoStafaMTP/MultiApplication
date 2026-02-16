@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Password too short' }, { status: 400 })
   }
 
-  const changed = await rotateAdminPassword(next)
+  const changed = await rotateAdminPassword(curr, next)
   if (!changed) return NextResponse.json({ error: 'Current password is wrong' }, { status: 401 })
 
   return NextResponse.json({ ok: true })

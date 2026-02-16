@@ -1,18 +1,6 @@
 import Link from 'next/link'
 import { listCases } from '@/src/lib/db'
 
-// NOTE: Keep this type minimal for the table; extend as needed.
-type CaseListItem = {
-  id: string;
-  title: string;
-  brand: string;
-  model: string | null;
-  updatedAt: string | number | Date;
-  createdAt?: string | number | Date;
-  status?: string | null;
-};
-
-
 export const runtime = 'nodejs'
 
 export default async function AdminCasesPage() {
@@ -46,7 +34,7 @@ export default async function AdminCasesPage() {
                 </td>
               </tr>
             ) : (
-              cases.map((c: CaseListItem) => (
+              cases.map((c) => (
                 <tr key={c.id} className="border-t border-neutral-800">
                   <td className="p-3">{c.title}</td>
                   <td className="p-3">{c.brand}</td>
