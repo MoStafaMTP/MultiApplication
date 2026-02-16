@@ -6,6 +6,13 @@ import { requireAdmin } from "@/app/api/admin/_requireAdmin";
 
 export const runtime = "nodejs";
 
+type FileLike = {
+  name?: string;
+  type?: string;
+  size?: number;
+  arrayBuffer?: () => Promise<ArrayBuffer>;
+};
+
 function safeExt(mime: string, original: string) {
   const byMime: Record<string, string> = {
     "image/jpeg": ".jpg",
@@ -16,35 +23,58 @@ function safeExt(mime: string, original: string) {
     "video/webm": ".webm",
     "video/quicktime": ".mov",
   };
-  const ext = byMime[mime];
-  if (ext) return ext;
+  if (byMime[mime]) return byMime[mime];
   const o = path.extname(original || "");
-  return o && o.length <= 6 ? o : "";
+  return o && o.length <= 10 ? o : "";
 }
 
 export async function POST(request: Request) {
-  if (!(await requireAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    if (!(await requireAdmin())) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const form = await request.formData();
-  const file = form.get("file");
-  if (!file || !(file instanceof File)) return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+    const form = await request.formData();
+    const file = form.get("file") as unknown as FileLike;
 
-  const mime = file.type || "application/octet-stream";
-  const ext = safeExt(mime, file.name);
-  const type = mime.startsWith("video/") ? "VIDEO" : "IMAGE";
+    if (!file || typeof file.arrayBuffer !== "function") {
+      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+    }
 
-  const now = new Date();
-  const folder = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads", folder);
-  await fs.mkdir(uploadDir, { recursive: true });
+    const size = typeof file.size === "number" ? file.size : 0;
+    const max = Number(process.env.UPLOAD_MAX_BYTES || 50 * 1024 * 1024); // 50MB default
+    if (size > max) {
+      return NextResponse.json(
+        { error: `File too large. Max is ${Math.floor(max / (1024 * 1024))}MB` },
+        { status: 413 }
+      );
+    }
 
-  const id = crypto.randomBytes(12).toString("hex");
-  const filename = `${id}${ext}`;
-  const filepath = path.join(uploadDir, filename);
+    const mime = file.type || "application/octet-stream";
+    const originalName = file.name || "upload";
+    const ext = safeExt(mime, originalName);
+    const type = mime.startsWith("video/") ? "VIDEO" : "IMAGE";
 
-  const ab = await file.arrayBuffer();
-  await fs.writeFile(filepath, Buffer.from(ab));
+    const now = new Date();
+    const folder = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-  const url = `/uploads/${folder}/${filename}`;
-  return NextResponse.json({ url, type });
+    const uploadDir = path.join(process.cwd(), "public", "uploads", folder);
+    await fs.mkdir(uploadDir, { recursive: true });
+
+    const id = crypto.randomBytes(12).toString("hex");
+    const filename = `${id}${ext}`;
+    const filepath = path.join(uploadDir, filename);
+
+    const ab = await file.arrayBuffer();
+    await fs.writeFile(filepath, Buffer.from(ab));
+
+    const url = `/uploads/${folder}/${filename}`;
+    return NextResponse.json({ url, type });
+  } catch (e: any) {
+    return NextResponse.json(
+      { error: e?.message || "Upload failed" },
+      { status: 500 }
+    );
+  }
 }
+

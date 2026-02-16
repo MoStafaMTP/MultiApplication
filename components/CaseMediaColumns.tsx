@@ -10,35 +10,24 @@ function MediaTile({ m }: { m: Item }) {
       href={m.url}
       target="_blank"
       rel="noreferrer"
-      className="group overflow-hidden rounded-2xl border p-2 transition hover:opacity-95"
+      className="group relative overflow-hidden rounded-2xl border"
       style={{ borderColor: "rgb(var(--card-border))", background: "rgba(var(--surface-2), 0.25)" }}
-      title="Open in new tab"
+      title="Open"
     >
-      <div className="aspect-square overflow-hidden rounded-xl border" style={{ borderColor: "rgb(var(--card-border))" }}>
-        {m.type === "VIDEO" ? (
-          <div className="flex h-full w-full items-center justify-center">
-            <div className="flex flex-col items-center gap-2">
-              <div
-                className="flex h-12 w-12 items-center justify-center rounded-2xl border"
-                style={{ borderColor: "rgb(var(--card-border))", background: "rgba(var(--surface-2), 0.35)" }}
-                aria-hidden="true"
-              >
-                <span className="text-lg">▶</span>
-              </div>
-              <div className="text-xs subtle-text">Video</div>
-            </div>
-          </div>
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={m.url} alt="media" className="h-full w-full object-cover" loading="lazy" decoding="async" />
-        )}
-      </div>
-
-      <div className="mt-2 flex items-center justify-between">
-        {/* removed IMAGE/VIDEO label */}
-        <span className="text-xs subtle-text"></span>
-        <span className="text-xs font-semibold opacity-0 transition group-hover:opacity-100">Open</span>
-      </div>
+      {m.type === "VIDEO" ? (
+        <div className="flex aspect-square items-center justify-center text-sm font-semibold opacity-80">
+          <span className="mr-2">▶</span> Video
+        </div>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={m.url}
+          alt="media"
+          className="h-full w-full object-cover transition group-hover:scale-[1.02]"
+          loading="lazy"
+          decoding="async"
+        />
+      )}
     </a>
   );
 }
@@ -47,8 +36,8 @@ function Column({
   title,
   subtitle,
   items,
-  initial = 24,
-  step = 24,
+  initial = 18,
+  step = 18,
 }: {
   title: string;
   subtitle: string;
@@ -61,34 +50,38 @@ function Column({
   const hasMore = items.length > shown.length;
 
   return (
-    <div className="card p-6">
-      <div className="flex items-center justify-between gap-3">
+    <div className="space-y-3">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-sm font-semibold">{title}</div>
-          <div className="mt-1 text-xs subtle-text">{subtitle}</div>
+          <div className="text-sm font-extrabold">{title}</div>
+          <div className="text-xs opacity-70">{subtitle}</div>
         </div>
-        <span className="text-xs subtle-text">
+        <div className="text-xs font-semibold opacity-70">
           {shown.length}/{items.length}
-        </span>
+        </div>
       </div>
 
       {items.length === 0 ? (
-        <div className="mt-4 text-sm subtle-text">No media.</div>
+        <div className="rounded-2xl border p-6 text-sm opacity-70" style={{ borderColor: "rgb(var(--card-border))" }}>
+          No media.
+        </div>
       ) : (
         <>
-          <div className="mt-4 grid grid-cols-2 gap-3">{shown.map((m) => <MediaTile key={m.id} m={m} />)}</div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-3">
+            {shown.map((m) => (
+              <MediaTile key={m.id} m={m} />
+            ))}
+          </div>
 
           {hasMore ? (
-            <div className="mt-4">
-              <button
-                type="button"
-                onClick={() => setLimit((v) => Math.min(items.length, v + step))}
-                className="rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:opacity-90"
-                style={{ borderColor: "rgb(var(--card-border))", background: "rgba(var(--surface-2), 0.35)" }}
-              >
-                Load more
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setLimit((v) => Math.min(items.length, v + step))}
+              className="rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:opacity-90"
+              style={{ borderColor: "rgb(var(--card-border))", background: "rgba(var(--surface-2), 0.35)" }}
+            >
+              Load more
+            </button>
           ) : null}
         </>
       )}
@@ -98,10 +91,14 @@ function Column({
 
 export default function CaseMediaColumns({ before, after }: { before: Item[]; after: Item[] }) {
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <div className="grid gap-6 lg:grid-cols-2">
       {/* Left AFTER, Right BEFORE */}
-      <Column title="AFTER" subtitle="After photos/videos." items={after} />
-      <Column title="BEFORE" subtitle="Before photos/videos." items={before} />
+      <div className="rounded-3xl border p-5" style={{ borderColor: "rgb(var(--card-border))", background: "rgba(var(--surface-2), 0.2)" }}>
+        <Column title="After" subtitle="Final / installed results" items={after} />
+      </div>
+      <div className="rounded-3xl border p-5" style={{ borderColor: "rgb(var(--card-border))", background: "rgba(var(--surface-2), 0.2)" }}>
+        <Column title="Before" subtitle="Original condition" items={before} />
+      </div>
     </div>
   );
 }

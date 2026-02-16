@@ -1,67 +1,84 @@
-import Shell from "../../../components/Shell";
-import { prisma } from "../../../lib/prisma";
-import { notFound } from "next/navigation";
-import Link from "next/link";
-import CaseMediaColumns from "../../../components/CaseMediaColumns";
+// NOTE: In Next.js 15, page `params` is typed as a Promise in generated PageProps.
+import Link from 'next/link'
+import BeforeAfterSlider from '@/components/BeforeAfterSlider'
+import { getCaseById } from '@/src/lib/db'
 
-function years(y1: number, y2: number) {
-  return y1 === y2 ? String(y1) : `${y1}–${y2}`;
-}
+export const runtime = 'nodejs'
 
-function sortMedia(media: any[]) {
-  return (media ?? []).slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-}
+type Props = { params: Promise<{ id: string }> }
 
-export const dynamic = 'force-dynamic';
+export default async function CasePage({ params }: Props) {
+  const c = await getCaseById((await params).id)
+  if (!c) {
+    return (
+      <main className="mx-auto max-w-4xl p-6">
+        <Link href="/case" className="text-sm text-neutral-300 hover:text-neutral-100">← Back</Link>
+        <h1 className="mt-4 text-2xl font-semibold">Case not found</h1>
+      </main>
+    )
+  }
 
-export default async function CasePage({ params }: any) {
-  const p = await params;
-  const id = (p?.id as string | undefined) ?? undefined;
-
-  if (!id || id === "undefined" || id === "null") return notFound();
-
-  const c = await prisma.case.findUnique({
-    where: { id },
-    include: { media: true },
-  });
-
-  if (!c || !c.published) return notFound();
-
-  const media = sortMedia(c.media);
-
-  const before = media
-    .filter((m) => m.kind === "BEFORE")
-    .map((m) => ({ id: m.id, url: m.url, type: m.type }));
-
-  const after = media
-    .filter((m) => m.kind === "AFTER")
-    .map((m) => ({ id: m.id, url: m.url, type: m.type }));
+  const before = c.beforeImages[0]
+  const after = c.afterImages[0]
 
   return (
-    <Shell
-      rightSlot={
-        <Link
-          href="/"
-          className="rounded-2xl border px-3 py-2 text-sm font-semibold transition hover:opacity-90"
-          style={{ borderColor: "rgb(var(--card-border))", background: "rgba(var(--card), 0.6)" }}
-        >
-          Back to Home
-        </Link>
-      }
-    >
-      <div className="space-y-6">
-        <header className="card p-6">
-          <div className="flex flex-col gap-2">
-            <h1 className="text-2xl font-black tracking-tight">{c.title}</h1>
-            <p className="text-sm subtle-text">
-              {c.brand} {c.model} • {years(c.yearStart, c.yearEnd)}
-              {c.sku ? ` • SKU: ${c.sku}` : ""}
-            </p>
-          </div>
-        </header>
-
-        <CaseMediaColumns before={before} after={after} />
+    <main className="mx-auto max-w-5xl p-6">
+      <Link href="/case" className="text-sm text-neutral-300 hover:text-neutral-100">← Back</Link>
+      <h1 className="mt-4 text-2xl font-semibold">{c.title}</h1>
+      <div className="mt-1 text-neutral-400">
+        {c.brand} · {c.model}
       </div>
-    </Shell>
-  );
+      {c.description ? <p className="mt-3 text-neutral-200">{c.description}</p> : null}
+
+      {before && after ? (
+        <div className="mt-6">
+          <BeforeAfterSlider beforeUrl={before} afterUrl={after} />
+        </div>
+      ) : (
+        <div className="mt-6 rounded-xl border border-neutral-800 bg-neutral-950 p-4 text-neutral-300">
+          This case does not have both a before and after image.
+        </div>
+      )}
+
+      {(c.beforeImages.length > 1 || c.afterImages.length > 1) ? (
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
+          <div>
+            <h2 className="font-semibold">Before images</h2>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              {c.beforeImages.map((url) => (
+                <a key={url} href={url} target="_blank" rel="noreferrer">
+                  <img src={url} alt="Before" className="aspect-video w-full rounded-lg border border-neutral-800 object-cover" />
+                </a>
+              ))}
+            </div>
+          </div>
+          <div>
+            <h2 className="font-semibold">After images</h2>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              {c.afterImages.map((url) => (
+                <a key={url} href={url} target="_blank" rel="noreferrer">
+                  <img src={url} alt="After" className="aspect-video w-full rounded-lg border border-neutral-800 object-cover" />
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {c.videos.length ? (
+        <div className="mt-8">
+          <h2 className="font-semibold">Videos</h2>
+          <div className="mt-3 grid gap-4 md:grid-cols-2">
+            {c.videos.map((url) => (
+              <video key={url} src={url} controls className="w-full rounded-xl border border-neutral-800" />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="mt-10 text-xs text-neutral-500">
+        ID: {c.id} · Updated: {new Date(c.updatedAt).toLocaleString()}
+      </div>
+    </main>
+  )
 }

@@ -1,0 +1,27 @@
+import crypto from 'node:crypto'
+
+export function randomId(len = 12) {
+  return crypto.randomBytes(len).toString('hex')
+}
+
+export function hashPassword(password: string, salt?: string) {
+  const actualSalt = salt ?? crypto.randomBytes(16).toString('hex')
+  const hash = crypto.scryptSync(password, actualSalt, 64).toString('hex')
+  return { salt: actualSalt, hash }
+}
+
+export function timingSafeEqual(a: string, b: string) {
+  const ab = Buffer.from(a)
+  const bb = Buffer.from(b)
+  if (ab.length !== bb.length) return false
+  return crypto.timingSafeEqual(ab, bb)
+}
+
+import { timingSafeEqual } from "node:crypto";
+
+export function timingSafeEqualStr(a: string, b: string): boolean {
+  const aBuf = Buffer.from(a);
+  const bBuf = Buffer.from(b);
+  if (aBuf.length !== bBuf.length) return false;
+  return timingSafeEqual(aBuf, bBuf);
+}

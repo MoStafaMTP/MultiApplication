@@ -7,7 +7,7 @@ export function toPublicCase(c: Case & { media: Media[] }): PublicCase {
     .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
     .map((m) => ({
       id: m.id,
-      kind: m.kind,
+      kind: m.kind === "GALLERY" ? "BEFORE" : m.kind,
       type: m.type,
       url: m.url,
       posterUrl: m.posterUrl,

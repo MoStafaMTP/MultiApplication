@@ -1,7 +1,10 @@
+export type MediaKind = "BEFORE" | "AFTER" | "GALLERY";
+export type MediaType = "IMAGE" | "VIDEO";
+
 export type PublicMedia = {
   id: string;
-  kind: "BEFORE" | "AFTER" | "GALLERY";
-  type: "IMAGE" | "VIDEO";
+  kind: MediaKind;
+  type: MediaType;
   url: string;
   posterUrl?: string | null;
   sortOrder: number;

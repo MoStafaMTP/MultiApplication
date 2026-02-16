@@ -1,0 +1,123 @@
+import fs from 'node:fs/promises'
+import path from 'node:path'
+
+export type MediaType = 'image' | 'video'
+
+export type MediaItem = {
+  url: string
+  type: MediaType
+  filename: string
+  size: number
+  modifiedAt: string
+}
+
+const ROOT_PUBLIC = path.join(process.cwd(), 'public')
+const MEDIA_DIR = path.join(ROOT_PUBLIC, 'media')
+const UPLOADS_DIR = path.join(MEDIA_DIR, 'uploads')
+
+const IMAGE_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'])
+const VIDEO_EXT = new Set(['.mp4', '.webm', '.mov', '.m4v'])
+
+async function ensureDirs() {
+  await fs.mkdir(UPLOADS_DIR, { recursive: true })
+}
+
+export function classifyMedia(filename: string): MediaType | null {
+  const ext = path.extname(filename).toLowerCase()
+  if (IMAGE_EXT.has(ext)) return 'image'
+  if (VIDEO_EXT.has(ext)) return 'video'
+  return null
+}
+
+export async function listMedia(): Promise<MediaItem[]> {
+  await ensureDirs()
+
+  const dirs = [MEDIA_DIR, UPLOADS_DIR]
+  const items: MediaItem[] = []
+
+  for (const dir of dirs) {
+    let entries: string[] = []
+    try {
+      entries = await fs.readdir(dir)
+    } catch {
+      continue
+    }
+
+    for (const filename of entries) {
+      const type = classifyMedia(filename)
+      if (!type) continue
+
+      const full = path.join(dir, filename)
+      const st = await fs.stat(full)
+      const rel = path.relative(MEDIA_DIR, full)
+      const url = '/media/' + rel.split(path.sep).join('/')
+
+      items.push({
+        url,
+        type,
+        filename,
+        size: st.size,
+        modifiedAt: st.mtime.toISOString(),
+      })
+    }
+  }
+
+  // newest first
+  items.sort((a, b) => (a.modifiedAt < b.modifiedAt ? 1 : -1))
+  return items
+}
+
+export async function saveUpload(file: File): Promise<MediaItem> {
+  await ensureDirs()
+
+  const type = classifyMedia(file.name)
+  if (!type) throw new Error('Unsupported file type')
+
+  const ext = path.extname(file.name).toLowerCase()
+  const base = path.basename(file.name, ext).replace(/[^a-zA-Z0-9_-]+/g, '_').slice(0, 80)
+  const stamp = Date.now()
+  const filename = `${base}_${stamp}${ext}`
+  const full = path.join(UPLOADS_DIR, filename)
+
+  const buf = Buffer.from(await file.arrayBuffer())
+  await fs.writeFile(full, buf)
+
+  const st = await fs.stat(full)
+  return {
+    url: `/media/uploads/${filename}`,
+    type,
+    filename,
+    size: st.size,
+    modifiedAt: st.mtime.toISOString(),
+  }
+}
+
+import fs from "node:fs/promises";
+import path from "node:path";
+import crypto from "node:crypto";
+
+export async function saveUploadedFile(file: any, opts: any = {}) {
+  const dir =
+    opts?.dir ??
+    process.env.UPLOAD_DIR ??
+    path.join(process.cwd(), "uploads");
+
+  await fs.mkdir(dir, { recursive: true });
+
+  const ab = await file.arrayBuffer();
+  const buf = Buffer.from(ab);
+
+  const original = file?.name ?? "upload.bin";
+  const ext = path.extname(original) || ".bin";
+  const name = `${Date.now()}-${crypto.randomBytes(6).toString("hex")}${ext}`;
+  const fullPath = path.join(dir, name);
+
+  await fs.writeFile(fullPath, buf);
+
+  return {
+    filename: name,
+    path: fullPath,
+    size: buf.length,
+    mime: file?.type ?? "application/octet-stream",
+  };
+}

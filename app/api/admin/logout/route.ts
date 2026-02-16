@@ -1,16 +1,10 @@
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { getSessionCookieName } from "@/lib/adminSession";
+import { NextResponse } from 'next/server'
+import { clearSessionCookie } from '@/src/lib/auth'
 
-export const runtime = "nodejs";
-
-async function getCookieStore() {
-  const maybe = cookies() as any;
-  return typeof maybe?.then === "function" ? await maybe : maybe;
-}
+export const runtime = 'nodejs'
 
 export async function POST() {
-  const store = await getCookieStore();
-  store.set(getSessionCookieName(), "", { httpOnly: true, path: "/", maxAge: 0 });
-  return NextResponse.json({ ok: true });
+  const res = NextResponse.json({ ok: true })
+  clearSessionCookie(res)
+  return res
 }

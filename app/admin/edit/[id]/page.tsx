@@ -47,5 +47,5 @@ export default async function EditCasePage({ params }: any) {
       })),
   };
 
-  return <AdminCaseForm mode="edit" initialCase={initialCase} />;
+  return <AdminCaseForm mode="edit" initial={initialCase} />;
 }

@@ -1,45 +1,32 @@
-import { NextResponse } from "next/server";
-import { prisma } from "../../../../lib/prisma";
-import { requireAdmin } from "../_requireAdmin";
+import { NextResponse } from 'next/server'
+import { requireAdminApi } from '@/src/lib/auth'
+import { createCase, listCases } from '@/src/lib/db'
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs'
 
-export async function GET() {
-  if (!(await requireAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const cases = await prisma.case.findMany({ orderBy: { createdAt: "desc" }, include: { media: true } });
-  return NextResponse.json(cases);
+export async function GET(req: Request) {
+  if (!requireAdminApi(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const cases = await listCases()
+  return NextResponse.json({ ok: true, cases })
 }
 
-export async function POST(request: Request) {
-  if (!(await requireAdmin())) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+export async function POST(req: Request) {
+  if (!requireAdminApi(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await request.json().catch(() => null);
-  if (!body) return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  const body = await req.json().catch(() => ({})) as any
+  const title = String(body.title ?? '').trim()
+  const brand = String(body.brand ?? '').trim()
+  const model = String(body.model ?? '').trim()
+  const description = String(body.description ?? '').trim()
 
-  const { title, brand, model, yearStart, yearEnd, sku, published, media } = body;
+  if (!title || !brand || !model) {
+    return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
+  }
 
-  if (!title || !brand || !model) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
-  if (!Number.isFinite(yearStart) || !Number.isFinite(yearEnd)) return NextResponse.json({ error: "Invalid years" }, { status: 400 });
+  const beforeImages = Array.isArray(body.beforeImages) ? body.beforeImages.map(String) : []
+  const afterImages = Array.isArray(body.afterImages) ? body.afterImages.map(String) : []
+  const videos = Array.isArray(body.videos) ? body.videos.map(String) : []
 
-  const created = await prisma.case.create({
-    data: {
-      title,
-      brand,
-      model,
-      yearStart,
-      yearEnd,
-      sku: sku ?? null,
-      published: Boolean(published),
-      media: {
-        create: Array.isArray(media)
-          ? media
-              .filter((m: any) => m?.url && m?.kind && m?.type)
-              .map((m: any) => ({ kind: m.kind, type: m.type, url: m.url, sortOrder: m.sortOrder ?? 0 }))
-          : [],
-      },
-    },
-    include: { media: true },
-  });
-
-  return NextResponse.json(created);
+  const created = await createCase({ title, brand, model, description, beforeImages, afterImages, videos })
+  return NextResponse.json({ ok: true, case: created }, { status: 201 })
 }

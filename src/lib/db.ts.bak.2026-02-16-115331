@@ -1,0 +1,135 @@
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import { hashPassword, randomId } from './crypto'
+
+export type CaseRecord = {
+  id: string
+  title: string
+  brand: string
+  model: string
+  description?: string
+  beforeImages: string[]
+  afterImages: string[]
+  videos: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+export type DBShape = {
+  admin: {
+    username: string
+    passwordSalt: string
+    passwordHash: string
+  }
+  cases: CaseRecord[]
+}
+
+const DB_PATH = path.join(process.cwd(), 'data', 'db.json')
+
+let writeQueue: Promise<void> = Promise.resolve()
+
+async function ensureDB(): Promise<DBShape> {
+  try {
+    const raw = await fs.readFile(DB_PATH, 'utf8')
+    return JSON.parse(raw) as DBShape
+  } catch {
+    const username = process.env.ADMIN_USER ?? 'admin'
+    const password = process.env.ADMIN_PASS ?? 'admin123'
+    const { salt, hash } = hashPassword(password)
+    const db: DBShape = {
+      admin: { username, passwordSalt: salt, passwordHash: hash },
+      cases: [],
+    }
+    await fs.mkdir(path.dirname(DB_PATH), { recursive: true })
+    await fs.writeFile(DB_PATH, JSON.stringify(db, null, 2), 'utf8')
+    return db
+  }
+}
+
+export async function getDB(): Promise<DBShape> {
+  return ensureDB()
+}
+
+export async function saveDB(next: DBShape): Promise<void> {
+  writeQueue = writeQueue.then(async () => {
+    await fs.mkdir(path.dirname(DB_PATH), { recursive: true })
+    await fs.writeFile(DB_PATH, JSON.stringify(next, null, 2), 'utf8')
+  })
+  return writeQueue
+}
+
+export async function createCase(input: Omit<CaseRecord, 'id' | 'createdAt' | 'updatedAt'>) {
+  const db = await getDB()
+  const now = new Date().toISOString()
+  const rec: CaseRecord = {
+    id: randomId(10),
+    createdAt: now,
+    updatedAt: now,
+    ...input,
+  }
+  db.cases.unshift(rec)
+  await saveDB(db)
+  return rec
+}
+
+export async function updateCase(id: string, patch: Partial<Omit<CaseRecord, 'id' | 'createdAt'>>) {
+  const db = await getDB()
+  const idx = db.cases.findIndex((c) => c.id === id)
+  if (idx === -1) return null
+  const updated: CaseRecord = {
+    ...db.cases[idx],
+    ...patch,
+    updatedAt: new Date().toISOString(),
+  }
+  db.cases[idx] = updated
+  await saveDB(db)
+  return updated
+}
+
+export async function deleteCase(id: string) {
+  const db = await getDB()
+  const before = db.cases.length
+  db.cases = db.cases.filter((c) => c.id !== id)
+  if (db.cases.length === before) return false
+  await saveDB(db)
+  return true
+}
+
+export async function getCase(id: string) {
+  const db = await getDB()
+  return db.cases.find((c) => c.id === id) ?? null
+}
+
+import { prisma as __prisma } from "./prisma";
+
+function __getCaseModel(p: any) {
+  // Try common model names. Adjust if your Prisma model is different.
+  return p?.case ?? p?.cases ?? p?.Case ?? p?.BeforeAfterCase ?? p?.beforeAfterCase;
+}
+
+export async function listCases() {
+  const p: any = __prisma as any;
+  const m: any = __getCaseModel(p);
+  if (!m?.findMany) return [];
+  try {
+    return await m.findMany({ orderBy: { createdAt: "desc" } });
+  } catch {
+    return await m.findMany();
+  }
+}
+
+export async function getCaseById(id: string) {
+  const p: any = __prisma as any;
+  const m: any = __getCaseModel(p);
+  if (!m) return null;
+
+  try {
+    if (m.findUnique) return await m.findUnique({ where: { id } });
+  } catch {}
+
+  try {
+    if (m.findFirst) return await m.findFirst({ where: { id } });
+  } catch {}
+
+  return null;
+}

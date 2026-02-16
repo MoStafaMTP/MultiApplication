@@ -1,29 +1,19 @@
-import "./globals.css";
-import type { Metadata } from "next";
+import './globals.css'
+import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: "App",
-  description: "Modern UI with light/dark + admin auth",
-};
+  title: 'Seat Cover Before/After',
+  description: 'Admin panel for before/after cases',
+}
 
-const themeBootstrap = `
-(function () {
-  try {
-    var stored = localStorage.getItem("theme");
-    var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-    var theme = stored || (prefersDark ? "dark" : "light");
-    document.documentElement.setAttribute("data-theme", theme);
-  } catch (e) {}
-})();
-`;
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning data-theme="light">
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
-      </head>
-      <body suppressHydrationWarning>{children}</body>
+    <html lang="en">
+      <body>
+        <div className="min-h-screen">{children}</div>
+      </body>
     </html>
-  );
+  )
 }

@@ -1,0 +1,62 @@
+import { NextResponse } from "next/server";
+
+import { requireAdminApi } from "@/src/lib/auth";
+import { getCaseById, updateCase, deleteCase } from "@/src/lib/db";
+
+// NOTE: Next.js validates the *shape* of the 2nd argument for Route Handlers.
+// Using an inline type literal keeps Next's type checker happy (avoid custom aliases like `Ctx`).
+
+export async function GET(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await requireAdminApi(req as any);
+    const item = await getCaseById(params.id);
+    if (!item) {
+      return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
+    }
+    return NextResponse.json(item);
+  } catch (err: any) {
+    const status = typeof err?.status === "number" ? err.status : 500;
+    return NextResponse.json(
+      { error: err?.message ?? "INTERNAL_ERROR" },
+      { status }
+    );
+  }
+}
+
+export async function PATCH(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await requireAdminApi(req as any);
+    const body = await req.json();
+    const updated = await updateCase(params.id, body);
+    return NextResponse.json(updated);
+  } catch (err: any) {
+    const status = typeof err?.status === "number" ? err.status : 500;
+    return NextResponse.json(
+      { error: err?.message ?? "INTERNAL_ERROR" },
+      { status }
+    );
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    await requireAdminApi(req as any);
+    await deleteCase(params.id);
+    return NextResponse.json({ ok: true });
+  } catch (err: any) {
+    const status = typeof err?.status === "number" ? err.status : 500;
+    return NextResponse.json(
+      { error: err?.message ?? "INTERNAL_ERROR" },
+      { status }
+    );
+  }
+}

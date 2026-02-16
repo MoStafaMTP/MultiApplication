@@ -19,7 +19,7 @@ export default async function EditCasePage({ params }: { params: Promise<{ id: s
         <h1 className="text-2xl font-bold tracking-tight">Edit case</h1>
         <p className="mt-2 text-sm text-neutral-600">Update fields and replace media.</p>
       </div>
-      <AdminCaseForm mode="edit" initialCase={toPublicCase(c)} />
+      <AdminCaseForm mode="edit" initial={toPublicCase(c)} />
     </div>
   );
 }
